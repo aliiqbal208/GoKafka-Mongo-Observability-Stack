@@ -1,0 +1,107 @@
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Go build artifacts
+main
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.prof
+
+# Go coverage files
+coverage.out
+coverage.html
+*.coverprofile
+
+# Go vendor and modules
+vendor/
+go.work
+go.work.sum
+
+# Application binaries
+/bin/
+/build/
+/dist/
+
+# Database data directories
+/mongodb_data_container/
+/data/
+keyfile
+
+# SSL/TLS certificates
+ssl/ca.crt
+ssl/ca.key
+ssl/server.crt
+ssl/server.csr
+ssl/server.key
+ssl/server.pem
+*.pem
+*.crt
+*.key
+*.csr
+
+# Kafka data
+data/kafka1/
+data/kafka2/
+data/kafka3/
+data/zookeeper/
+
+# Configuration files with secrets
+*.env
+.env.local
+.env.*.local
+config/secrets.yaml
+config/local.yaml
+
+# Log files
+*.log
+logs/
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker volumes and data
+docker-compose.override.yml
+.docker/
+
+# Debugging and profiling
+__debug_bin
+*.pprof
+cpu.prof
+mem.prof
+heap.prof
+
+# Air (Go hot reload)
+tmp/
+.air.toml.local
+
+# Test binaries
+*.test
+
+# Output from tools
+*.out
+
+# Dependency directories
+node_modules/ # if you have any JS tooling
