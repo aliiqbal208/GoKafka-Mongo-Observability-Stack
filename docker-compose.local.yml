@@ -1,0 +1,181 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    container_name: zookeeper
+    restart: always
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    ports:
+      - "2281:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - ./data/zookeeper/data:/var/lib/zookeeper/data
+      - ./data/zookeeper/datalog:/var/lib/zookeeper/log
+    networks:
+      - products_network
+
+
+  kafka1:
+    container_name: kafka1
+    image: confluentinc/cp-kafka:7.5.0
+    restart: always
+    hostname: kafka1
+    ports:
+      - "9191:9191"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka1:19091,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9191
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ./data/kafka1/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    networks:
+      - products_network
+
+  kafka2:
+    container_name: kafka2
+    restart: always
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka2
+    ports:
+      - "9192:9192"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka2:19092,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9192
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_BROKER_ID: 2
+    volumes:
+      - ./data/kafka2/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    networks:
+      - products_network
+
+  kafka3:
+    container_name: kafka3
+    image: confluentinc/cp-kafka:7.5.0
+    restart: always
+    hostname: kafka3
+    ports:
+      - "9193:9193"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka3:19093,LISTENER_DOCKER_EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9193
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - ./data/kafka3/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    networks:
+      - products_network
+
+  kafdrop:
+    container_name: kafdrop
+    image: obsidiandynamics/kafdrop
+    restart: "no"
+    ports:
+      - "9100:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka1:19091"
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    networks:
+      - products_network
+
+  redis:
+    image: redis:6-alpine
+    container_name: user_redis
+    ports:
+      - "6479:6379"
+    restart: always
+    networks:
+      - products_network
+
+  prometheus:
+    container_name: prometheus_container
+    restart: always
+    image: prom/prometheus
+    volumes:
+      - ./monitoring/prometheus-local.yml:/etc/prometheus/prometheus.yml:Z
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - '9290:9090'
+    networks:
+      - products_network
+
+
+  node_exporter:
+    container_name: node_exporter_container
+    restart: always
+    image: prom/node-exporter
+    ports:
+      - '9201:9100'
+    networks:
+      - products_network
+
+  grafana:
+    container_name: grafana_container
+    restart: always
+    image: grafana/grafana
+    ports:
+      - '3130:3000'
+    networks:
+      - products_network
+
+  jaeger:
+    container_name: jaeger_container
+    restart: always
+    image: jaegertracing/all-in-one:1.21
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+      - 5875:5775/udp
+      - 6931:6831/udp
+      - 6932:6832/udp
+      - 5878:5778
+      - 16786:16686
+      - 14368:14268
+      - 14350:14250
+      - 9511:9411
+    networks:
+      - products_network
+
+  mongodb:
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGODB_DATABASE: products
+    ports:
+      - 27117:27017
+    volumes:
+      - mongodb_data_container:/data/db
+
+volumes:
+  mongodb_data_container:
+#volumes:
+#  main_pgdata:
+#  user_pgdata:
+#  prometheus-data:
+
+networks:
+  products_network:
+    driver: bridge
