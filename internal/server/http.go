@@ -1,7 +1,6 @@
 package server
 
 import (
-	"net/http"
 	"strings"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 // runHTTPServer starts the HTTP server. This call will BLOCK until the server is closed or errors out.
@@ -42,11 +42,8 @@ func (s *server) runHTTPServer() error {
 	docs.SwaggerInfo.Host = "localhost:5007"
 	docs.SwaggerInfo.Schemes = []string{"http"}
 
-	// Swagger routes - serve static swagger UI
-	s.app.Get("/swagger/*", func(c *fiber.Ctx) error {
-		// For swagger, we'll redirect to the swagger docs
-		return c.Redirect("/swagger/index.html", http.StatusMovedPermanently)
-	})
+	// Swagger routes - serve swagger UI using fiber-swagger
+	s.app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	// Common middleware:
 	s.app.Use(logger.New())

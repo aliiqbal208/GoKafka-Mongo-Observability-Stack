@@ -44,7 +44,10 @@ func NewProductHandlers(
 // @Description Create new single product
 // @Accept json
 // @Produce json
+// @Param product body models.Product true "Product data"
 // @Success 201 {object} models.Product
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
 // @Router /products [post]
 func (p *productHandlers) CreateProduct() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -80,7 +83,10 @@ func (p *productHandlers) CreateProduct() fiber.Handler {
 // @Accept json
 // @Produce json
 // @Param product_id path string true "product id"
+// @Param product body models.Product true "Product data"
 // @Success 200 {object} models.Product
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
 // @Router /products/{product_id} [put]
 func (p *productHandlers) UpdateProduct() fiber.Handler {
 	return func(c *fiber.Ctx) error {

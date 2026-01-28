@@ -21,7 +21,7 @@ Http:
 
 
 Kafka:
-  Brokers: [ "localhost:9091",  "localhost:9092",  "localhost:9093" ]
+  Brokers: [ "localhost:9191",  "localhost:9192",  "localhost:9193" ]
 
 Logger:
   DisableCaller: false
@@ -35,18 +35,18 @@ Metrics:
   ServiceName: products_microservice
 
 Jaeger:
-  Host: localhost:6831
+  Host: localhost:6931
   ServiceName: products_microservice
   LogSpans: false
 
 MongoDB:
-  URI: "mongodb://localhost:27017"
+  URI: "mongodb://localhost:27117"
   User: "admin"
   Password: "admin"
   DB: "products"
 
 Redis:
-  RedisAddr: localhost:6379
+  RedisAddr: localhost:6479
   RedisPassword:
   RedisDb: 0
   RedisDefaultDB: 0

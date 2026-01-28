@@ -1,30 +1,36 @@
+basePath: /api/v1
 definitions:
-  models.Product:
+  github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product:
+    description: Product information
     properties:
-      CategoryId:
-        type: string
-      createdAt:
-        type: string
       description:
+        example: Latest Apple smartphone with A17 Pro chip
+        maxLength: 500
+        minLength: 3
         type: string
       imageUrl:
+        example: https://example.com/image.jpg
         type: string
       name:
+        example: iPhone 15 Pro
+        maxLength: 250
+        minLength: 3
         type: string
       photos:
         items:
           type: string
         type: array
       price:
+        example: 999.99
         type: number
-      productId:
-        type: string
       quantity:
+        example: 100
         type: integer
       rating:
+        example: 8
+        maximum: 10
+        minimum: 0
         type: integer
-      updatedAt:
-        type: string
     required:
     - description
     - name
@@ -32,7 +38,7 @@ definitions:
     - quantity
     - rating
     type: object
-  models.ProductsList:
+  github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList:
     properties:
       hasMore:
         type: boolean
@@ -40,7 +46,7 @@ definitions:
         type: integer
       products:
         items:
-          $ref: '#/definitions/models.Product'
+          $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
         type: array
       size:
         type: integer
@@ -49,21 +55,71 @@ definitions:
       totalPages:
         type: integer
     type: object
+host: localhost:5007
 info:
   contact: {}
+  description: Products REST API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Products microservice
+  version: "1.0"
 paths:
   /products:
+    get:
+      consumes:
+      - application/json
+      description: Get all products with pagination
+      parameters:
+      - default: "1"
+        description: page number
+        in: query
+        name: page
+        type: string
+      - default: "10"
+        description: number of elements
+        in: query
+        name: size
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList'
+      summary: Get all products
+      tags:
+      - Products
     post:
       consumes:
       - application/json
       description: Create new single product
+      parameters:
+      - description: Product data
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.Product'
+            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
       summary: Create new product
       tags:
       - Products
@@ -84,7 +140,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Product'
+            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
       summary: Get product by id
       tags:
       - Products
@@ -98,13 +154,29 @@ paths:
         name: product_id
         required: true
         type: string
+      - description: Product data
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Product'
+            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
       summary: Update single product
       tags:
       - Products
@@ -132,7 +204,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.ProductsList'
+            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList'
       summary: Search product
       tags:
       - Products

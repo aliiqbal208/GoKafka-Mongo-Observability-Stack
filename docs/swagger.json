@@ -1,10 +1,57 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "Products REST API",
+        "title": "Products microservice",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
     },
+    "host": "localhost:5007",
+    "basePath": "/api/v1",
     "paths": {
         "/products": {
+            "get": {
+                "description": "Get all products with pagination",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get all products",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "1",
+                        "description": "page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "10",
+                        "description": "number of elements",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Create new single product",
                 "consumes": [
@@ -17,11 +64,36 @@
                     "Products"
                 ],
                 "summary": "Create new product",
+                "parameters": [
+                    {
+                        "description": "Product data",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.Product"
+                            "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -64,7 +136,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.ProductsList"
+                            "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList"
                         }
                     }
                 }
@@ -96,7 +168,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Product"
+                            "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product"
                         }
                     }
                 }
@@ -120,13 +192,36 @@
                         "name": "product_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Product data",
+                        "name": "product",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Product"
+                            "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -134,7 +229,8 @@
         }
     },
     "definitions": {
-        "models.Product": {
+        "github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product": {
+            "description": "Product information",
             "type": "object",
             "required": [
                 "description",
@@ -144,20 +240,21 @@
                 "rating"
             ],
             "properties": {
-                "CategoryId": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 3,
+                    "example": "Latest Apple smartphone with A17 Pro chip"
                 },
                 "imageUrl": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "https://example.com/image.jpg"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 250,
+                    "minLength": 3,
+                    "example": "iPhone 15 Pro"
                 },
                 "photos": {
                     "type": "array",
@@ -166,23 +263,22 @@
                     }
                 },
                 "price": {
-                    "type": "number"
-                },
-                "productId": {
-                    "type": "string"
+                    "type": "number",
+                    "example": 999.99
                 },
                 "quantity": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 100
                 },
                 "rating": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0,
+                    "example": 8
                 }
             }
         },
-        "models.ProductsList": {
+        "github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList": {
             "type": "object",
             "properties": {
                 "hasMore": {
@@ -194,7 +290,7 @@
                 "products": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Product"
+                        "$ref": "#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product"
                     }
                 },
                 "size": {
