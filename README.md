@@ -1,13 +1,15 @@
 # GoKafka-Mongo-Observability-Stack
 
-[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-AMD64%20%7C%20ARM64-lightgrey)](https://github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack)
 
-A **production-ready, event-driven microservice** showcasing modern Go architecture with full observability. This project demonstrates best practices for building scalable, maintainable microservices using **Go 1.23+**, **Kafka**, **gRPC**, **MongoDB**, **Redis**, and a complete monitoring stack (**Prometheus**, **Grafana**, **Jaeger**).
+A **production-ready, event-driven e-commerce microservice** showcasing modern Go architecture with full observability. This project demonstrates best practices for building scalable, maintainable microservices using **Go 1.24+**, **Kafka**, **gRPC**, **MongoDB**, **Redis**, and a complete monitoring stack (**Prometheus**, **Grafana**, **Jaeger**).
 
 ## 🎯 What Makes This Special
 
+- ✅ **Complete E-Commerce Backend** - User auth, products, cart, and orders
+- ✅ **JWT Authentication** - Secure, stateless token-based authentication
 - ✅ **Event-Driven Architecture** - Asynchronous processing with Kafka for scalability
 - ✅ **Dual Protocol Support** - Both REST (Fiber) and gRPC interfaces
 - ✅ **Clean Architecture** - Separation of concerns with clear layers (delivery, usecase, repository)
@@ -46,6 +48,8 @@ A **production-ready, event-driven microservice** showcasing modern Go architect
 - **[Fiber](https://github.com/gofiber/fiber)** – Express-inspired web framework for REST endpoints (fast, low memory)
 - **[Kafka](https://github.com/segmentio/kafka-go)** – Kafka client library in Go (v0.4.50, ARM64 compatible)
 - **[gRPC](https://grpc.io/)** – gRPC framework
+- **[JWT](https://github.com/golang-jwt/jwt)** – JSON Web Token authentication
+- **[bcrypt](https://golang.org/x/crypto/bcrypt)** – Password hashing
 - **[viper](https://github.com/spf13/viper)** – Configuration management
 - **[go-redis](https://github.com/go-redis/redis)** – Redis client for Golang
 - **[zap](https://github.com/uber-go/zap)** – High-performance logging library
@@ -254,17 +258,54 @@ make down-local
 
 ### REST API (Fiber - Port 5007)
 
+#### 🔐 Authentication
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/auth/signup` | Register a new user | No |
+| POST | `/api/v1/auth/login` | Login and get JWT token | No |
+| POST | `/api/v1/auth/logout` | Logout (client discards token) | No |
+| GET | `/api/v1/auth/me` | Get current authenticated user | Yes |
+
+#### 📦 Products
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/v1/products` | Get all products (paginated) | No |
+| GET | `/api/v1/products/:id` | Get product by ID | No |
+| POST | `/api/v1/products` | Create new product (async via Kafka) | No |
+| PUT | `/api/v1/products/:id` | Update product (async via Kafka) | No |
+| GET | `/api/v1/products/search` | Search products | No |
+
+#### 🛒 Shopping Cart
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/v1/cart/:user_id` | Get user's cart | No |
+| POST | `/api/v1/cart/:user_id` | Add item to cart | No |
+| PUT | `/api/v1/cart/:user_id` | Update item quantity | No |
+| DELETE | `/api/v1/cart/:user_id` | Remove item from cart | No |
+| DELETE | `/api/v1/cart/:user_id/clear` | Clear entire cart | No |
+
+#### 📋 Orders
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/orders` | Create order from cart | No |
+| GET | `/api/v1/orders/:order_id` | Get order by ID | No |
+| GET | `/api/v1/orders/user/:user_id` | Get all orders for a user | No |
+| PUT | `/api/v1/orders/:order_id/status` | Update order status | No |
+
+**Order Statuses:** `pending` → `confirmed` → `processing` → `shipped` → `delivered` / `cancelled`
+
+#### 🔧 System
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Health check endpoint |
-| GET | `/api/v1/products` | Get all products (paginated) |
-| GET | `/api/v1/products/:id` | Get product by ID |
-| POST | `/api/v1/products` | Create new product (async via Kafka) |
-| PUT | `/api/v1/products/:id` | Update product (async via Kafka) |
-| GET | `/api/v1/products/search` | Search products |
 | GET | `/swagger/index.html` | Swagger API documentation |
 
-### gRPC API (Port 5000)
+### gRPC API (Port 5555)
 
 ```protobuf
 service ProductsService {
@@ -279,6 +320,8 @@ service ProductsService {
 
 ## 🧪 Testing the Endpoints
 
+### System
+
 1. **Health Check**
 
    ```bash
@@ -287,49 +330,120 @@ service ProductsService {
 
    Expected: `200 OK` and "Ok" in body.
 
-2. **Swagger UI Visit**
+2. **Swagger UI**
 
    Access [http://localhost:5007/swagger/index.html](http://localhost:5007/swagger/index.html) to view the Swagger docs.
 
-3. **Create a New Product**
+### Authentication
+
+3. **Register a New User**
 
    ```bash
-   curl -i -X POST http://localhost:5007/api/v1/products \
+   curl -X POST http://localhost:5007/api/v1/auth/signup \
      -H "Content-Type: application/json" \
-     -d '{ "categoryId": "64e5e0c2b591a09b168e8c21", "name": "Sample Product", "description": "A test product", "price": 12.99, "quantity": 5, "rating": 7, "imageUrl": "https://example.com/img.jpg", "photos": ["https://example.com/img1.jpg", "https://example.com/img2.jpg"] }'
+     -d '{"email": "user@example.com", "password": "password123", "name": "John Doe"}'
    ```
 
-   Expected: `201 Created`. Publishes a message to `create-product` topic. Consumer inserts into MongoDB.
+   Expected: `201 Created` with user data.
 
-4. **Update a Product**
+4. **Login**
 
    ```bash
-   curl -i -X PUT http://localhost:5007/api/v1/products/64e5e0c2b591a09b168e8c21 \
+   curl -X POST http://localhost:5007/api/v1/auth/login \
      -H "Content-Type: application/json" \
-     -d '{ "categoryId": "64e5e0c2b591a09b168e8c21", "name": "Updated Product", "description": "Updated description", "price": 20.99, "quantity": 10, "rating": 9, "imageUrl": "https://example.com/new.jpg", "photos": ["https://example.com/new1.jpg", "https://example.com/new2.jpg"] }'
+     -d '{"email": "user@example.com", "password": "password123"}'
    ```
 
-   Expected: `200 OK`. Publishes a message to `update-product`. Consumer updates MongoDB.
+   Expected: `200 OK` with user data and JWT token.
 
-5. **Get All Products**
+5. **Get Current User (Authenticated)**
 
    ```bash
-   curl -i "http://localhost:5007/api/v1/products?page=1&size=10"
+   curl -X GET http://localhost:5007/api/v1/auth/me \
+     -H "Authorization: Bearer <your-jwt-token>"
    ```
 
-   Expected: `200 OK` and JSON body with paginated list of products.
-   
-   Query Parameters:
-   - `page` (optional, default: 1) - Page number
-   - `size` (optional, default: 10) - Number of items per page
+   Expected: `200 OK` with user data.
 
-6. **Get a Product by ID**
+### Products
+
+6. **Create a New Product**
 
    ```bash
-   curl -i http://localhost:5007/api/v1/products/64e5e0c2b591a09b168e8c21
+   curl -X POST http://localhost:5007/api/v1/products \
+     -H "Content-Type: application/json" \
+     -d '{"categoryId": "64e5e0c2b591a09b168e8c21", "name": "Sample Product", "description": "A test product", "price": 12.99, "quantity": 5, "stock": 100, "rating": 7, "imageUrl": "https://example.com/img.jpg", "photos": ["https://example.com/img1.jpg"]}'
    ```
 
-   Expected: `200 OK` and JSON body of the product. If Kafka hasn't processed the message, you might encounter an error or missing product data.
+   Expected: `201 Created`. Publishes to Kafka topic.
+
+7. **Get All Products**
+
+   ```bash
+   curl "http://localhost:5007/api/v1/products?page=1&size=10"
+   ```
+
+   Expected: `200 OK` with paginated list.
+
+### Shopping Cart
+
+8. **Add Item to Cart**
+
+   ```bash
+   curl -X POST http://localhost:5007/api/v1/cart/user123 \
+     -H "Content-Type: application/json" \
+     -d '{"productId": "64e5e0c2b591a09b168e8c21", "quantity": 2}'
+   ```
+
+   Expected: `200 OK` with updated cart.
+
+9. **Get User's Cart**
+
+   ```bash
+   curl http://localhost:5007/api/v1/cart/user123
+   ```
+
+   Expected: `200 OK` with cart items.
+
+10. **Update Item Quantity**
+
+    ```bash
+    curl -X PUT http://localhost:5007/api/v1/cart/user123 \
+      -H "Content-Type: application/json" \
+      -d '{"productId": "64e5e0c2b591a09b168e8c21", "quantity": 5}'
+    ```
+
+    Expected: `200 OK` with updated cart.
+
+### Orders
+
+11. **Create Order from Cart**
+
+    ```bash
+    curl -X POST http://localhost:5007/api/v1/orders \
+      -H "Content-Type: application/json" \
+      -d '{"userId": "user123", "shippingAddress": {"street": "123 Main St", "city": "New York", "state": "NY", "country": "USA", "zipCode": "10001"}}'
+    ```
+
+    Expected: `201 Created` with order details. Cart is cleared. Publishes to Kafka.
+
+12. **Get User's Orders**
+
+    ```bash
+    curl http://localhost:5007/api/v1/orders/user/user123
+    ```
+
+    Expected: `200 OK` with list of orders.
+
+13. **Update Order Status**
+
+    ```bash
+    curl -X PUT http://localhost:5007/api/v1/orders/<order_id>/status \
+      -H "Content-Type: application/json" \
+      -d '{"status": "confirmed"}'
+    ```
+
+    Expected: `200 OK`. Publishes order update to Kafka.
 
 ---
 
@@ -357,8 +471,13 @@ To modify settings, edit `config/config.yaml` or `config/config-docker.yml`:
 
 ```yaml
 Server:
-  Port: :5007
+  Port: :5555
   Development: true
+  JWTSecret: "your-super-secret-jwt-key-change-in-production"
+  JWTExpireHours: 24
+  
+Http:
+  Port: :5007
   
 Kafka:
   Brokers: [localhost:9091, localhost:9092, localhost:9093]
@@ -381,20 +500,34 @@ Redis:
 ├── docs/                   # Swagger documentation
 ├── internal/
 │   ├── interceptors/       # gRPC interceptors
-│   ├── middlewares/        # HTTP middlewares (Fiber)
-│   ├── models/             # Domain models
+│   ├── middlewares/        # HTTP middlewares (Fiber) + JWT auth
+│   ├── models/             # Domain models (User, Product, Cart, Order)
+│   ├── cart/               # Cart domain
+│   │   ├── delivery/       # HTTP handlers
+│   │   ├── repository/     # MongoDB & Redis repositories
+│   │   └── usecase/        # Business logic
+│   ├── order/              # Order domain
+│   │   ├── delivery/       # HTTP handlers + Kafka producer/consumer
+│   │   ├── repository/     # MongoDB & Redis repositories
+│   │   └── usecase/        # Business logic
 │   ├── product/            # Product domain
 │   │   ├── delivery/       # HTTP (Fiber) & gRPC handlers
 │   │   ├── repository/     # MongoDB & Redis repositories
+│   │   └── usecase/        # Business logic
+│   ├── user/               # User/Auth domain
+│   │   ├── delivery/       # HTTP handlers (signup, login, etc.)
+│   │   ├── repository/     # MongoDB repository
 │   │   └── usecase/        # Business logic
 │   └── server/             # Server setup (HTTP + gRPC)
 ├── pkg/                    # Shared packages
 │   ├── grpc_errors/        # gRPC error handling
 │   ├── http_errors/        # HTTP error handling (Fiber)
 │   ├── jaeger/             # Jaeger tracing setup
+│   ├── jwt/                # JWT token generation & validation
 │   ├── kafka/              # Kafka producer/consumer
 │   ├── logger/             # Zap logger
 │   ├── mongodb/            # MongoDB connection
+│   ├── product_errors/     # Product-specific errors
 │   ├── redis/              # Redis connection
 │   └── utils/              # Utilities (pagination, etc.)
 ├── proto/                  # Protocol Buffer definitions
@@ -404,6 +537,24 @@ Redis:
 ├── Dockerfile              # Production Dockerfile
 └── Dockerfile.dev          # Development Dockerfile (hot reload)
 ```
+
+### MongoDB Collections
+
+| Collection | Description |
+|------------|-------------|
+| `users` | User accounts with hashed passwords |
+| `products` | Product catalog |
+| `carts` | Shopping carts per user |
+| `orders` | Order records with status history |
+
+### Kafka Topics
+
+| Topic | Producer | Consumer | Description |
+|-------|----------|----------|-------------|
+| `create-product` | Product API | Product Consumer | New product creation |
+| `update-product` | Product API | Product Consumer | Product updates |
+| `order-created` | Order API | Order Consumer | New order events |
+| `order-updated` | Order API | Order Consumer | Order status changes |
 
 ### Design Patterns Used
 

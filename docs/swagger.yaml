@@ -1,6 +1,186 @@
 basePath: /api/v1
 definitions:
-  github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product:
+  models.AddItemRequest:
+    description: Request body for adding item to cart
+    properties:
+      productId:
+        example: 507f1f77bcf86cd799439011
+        type: string
+      quantity:
+        example: 2
+        type: integer
+    required:
+    - productId
+    - quantity
+    type: object
+  models.Cart:
+    description: Shopping cart with items
+    properties:
+      cartId:
+        type: string
+      createdAt:
+        type: string
+      itemCount:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/models.CartItem'
+        type: array
+      total:
+        type: number
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    required:
+    - userId
+    type: object
+  models.CartItem:
+    description: Cart item with product details
+    properties:
+      imageUrl:
+        type: string
+      price:
+        type: number
+      productId:
+        type: string
+      productName:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - price
+    - productId
+    - productName
+    - quantity
+    type: object
+  models.CreateOrderRequest:
+    description: Request body for creating an order
+    properties:
+      notes:
+        example: Please deliver after 5 PM
+        type: string
+      paymentMethod:
+        example: credit_card
+        type: string
+      shippingAddress:
+        $ref: '#/definitions/models.ShippingAddress'
+      userId:
+        example: user123
+        type: string
+    required:
+    - paymentMethod
+    - shippingAddress
+    - userId
+    type: object
+  models.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  models.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/models.UserResponse'
+    type: object
+  models.Order:
+    description: Customer order with items and status
+    properties:
+      confirmedAt:
+        type: string
+      createdAt:
+        type: string
+      deliveredAt:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/models.OrderItem'
+        minItems: 1
+        type: array
+      notes:
+        type: string
+      orderId:
+        type: string
+      paymentMethod:
+        type: string
+      paymentStatus:
+        type: string
+      shippedAt:
+        type: string
+      shippingAddress:
+        $ref: '#/definitions/models.ShippingAddress'
+      status:
+        $ref: '#/definitions/models.OrderStatus'
+      totalAmount:
+        type: number
+      updatedAt:
+        type: string
+      userId:
+        type: string
+    required:
+    - items
+    - paymentMethod
+    - shippingAddress
+    - userId
+    type: object
+  models.OrderItem:
+    description: Order item with product details
+    properties:
+      price:
+        type: number
+      productId:
+        type: string
+      productName:
+        type: string
+      quantity:
+        type: integer
+      subtotal:
+        type: number
+    type: object
+  models.OrderStatus:
+    enum:
+    - pending
+    - confirmed
+    - processing
+    - shipped
+    - delivered
+    - cancelled
+    - refunded
+    type: string
+    x-enum-varnames:
+    - OrderStatusPending
+    - OrderStatusConfirmed
+    - OrderStatusProcessing
+    - OrderStatusShipped
+    - OrderStatusDelivered
+    - OrderStatusCancelled
+    - OrderStatusRefunded
+  models.OrdersList:
+    description: Paginated list of orders
+    properties:
+      hasMore:
+        type: boolean
+      orders:
+        items:
+          $ref: '#/definitions/models.Order'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  models.Product:
     description: Product information
     properties:
       description:
@@ -31,6 +211,9 @@ definitions:
         maximum: 10
         minimum: 0
         type: integer
+      stock:
+        example: 50
+        type: integer
     required:
     - description
     - name
@@ -38,7 +221,7 @@ definitions:
     - quantity
     - rating
     type: object
-  github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList:
+  models.ProductsList:
     properties:
       hasMore:
         type: boolean
@@ -46,7 +229,7 @@ definitions:
         type: integer
       products:
         items:
-          $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+          $ref: '#/definitions/models.Product'
         type: array
       size:
         type: integer
@@ -54,6 +237,84 @@ definitions:
         type: integer
       totalPages:
         type: integer
+    type: object
+  models.ShippingAddress:
+    description: Shipping address details
+    properties:
+      addressLine:
+        example: 123 Main St
+        type: string
+      city:
+        example: New York
+        type: string
+      country:
+        example: USA
+        type: string
+      fullName:
+        example: John Doe
+        type: string
+      phone:
+        example: "+1234567890"
+        type: string
+      postalCode:
+        example: "10001"
+        type: string
+      state:
+        example: NY
+        type: string
+    required:
+    - addressLine
+    - city
+    - country
+    - fullName
+    - phone
+    - postalCode
+    - state
+    type: object
+  models.SignupRequest:
+    properties:
+      email:
+        type: string
+      name:
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  models.UpdateItemRequest:
+    description: Request body for updating item quantity
+    properties:
+      quantity:
+        example: 3
+        type: integer
+    required:
+    - quantity
+    type: object
+  models.UpdateOrderStatusRequest:
+    description: Request body for updating order status
+    properties:
+      status:
+        allOf:
+        - $ref: '#/definitions/models.OrderStatus'
+        example: confirmed
+    required:
+    - status
+    type: object
+  models.UserResponse:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
     type: object
 host: localhost:5007
 info:
@@ -66,6 +327,474 @@ info:
   title: Products microservice
   version: "1.0"
 paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login user
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      description: Logout user (client should discard token)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Logout user
+      tags:
+      - auth
+  /api/v1/auth/me:
+    get:
+      description: Get the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - auth
+  /api/v1/auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Signup request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /api/v1/orders:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new order from the user's cart
+      parameters:
+      - description: Order creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Order'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new order
+      tags:
+      - Orders
+  /api/v1/orders/{order_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves an order by its ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: order_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Order'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get an order by ID
+      tags:
+      - Orders
+  /api/v1/orders/{order_id}/cancel:
+    put:
+      consumes:
+      - application/json
+      description: Cancels an order (only for pending or confirmed orders)
+      parameters:
+      - description: Order ID
+        in: path
+        name: order_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Order'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Cancel an order
+      tags:
+      - Orders
+  /api/v1/orders/{order_id}/status:
+    put:
+      consumes:
+      - application/json
+      description: Updates the status of an order
+      parameters:
+      - description: Order ID
+        in: path
+        name: order_id
+        required: true
+        type: string
+      - description: Status update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateOrderStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Order'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update order status
+      tags:
+      - Orders
+  /api/v1/orders/user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all orders for a specific user with pagination
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OrdersList'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all orders for a user
+      tags:
+      - Orders
+  /cart/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove all items from user's cart
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Clear cart
+      tags:
+      - Cart
+    get:
+      consumes:
+      - application/json
+      description: Get cart by user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get user's cart
+      tags:
+      - Cart
+  /cart/{user_id}/items:
+    post:
+      consumes:
+      - application/json
+      description: Add a product to user's cart
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Item to add
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/models.AddItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Add item to cart
+      tags:
+      - Cart
+  /cart/{user_id}/items/{product_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a product from user's cart
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Remove item from cart
+      tags:
+      - Cart
+    put:
+      consumes:
+      - application/json
+      description: Update the quantity of an item in cart
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      - description: New quantity
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Cart'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update cart item quantity
+      tags:
+      - Cart
   /products:
     get:
       consumes:
@@ -88,7 +817,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList'
+            $ref: '#/definitions/models.ProductsList'
       summary: Get all products
       tags:
       - Products
@@ -102,14 +831,14 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+          $ref: '#/definitions/models.Product'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+            $ref: '#/definitions/models.Product'
         "400":
           description: Bad Request
           schema:
@@ -140,7 +869,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+            $ref: '#/definitions/models.Product'
       summary: Get product by id
       tags:
       - Products
@@ -159,14 +888,14 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+          $ref: '#/definitions/models.Product'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.Product'
+            $ref: '#/definitions/models.Product'
         "400":
           description: Bad Request
           schema:
@@ -204,7 +933,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/github_com_aliiqbal208_GoKafka-Mongo-Observability-Stack_internal_models.ProductsList'
+            $ref: '#/definitions/models.ProductsList'
       summary: Search product
       tags:
       - Products

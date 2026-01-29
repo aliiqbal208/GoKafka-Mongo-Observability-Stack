@@ -8,6 +8,8 @@ Server:
   WriteTimeout: 5
   MaxConnectionIdle: 5
   MaxConnectionAge: 5
+  JWTSecret: "your-super-secret-jwt-key-change-in-production"
+  JWTExpireHours: 24
 
 Http:
   Port: ":5007"

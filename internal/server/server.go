@@ -35,11 +35,30 @@ import (
 	"github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/middlewares"
 
 	// IMPORTANT: rename your local “internal/product/delivery/grpc” package to avoid name collision:
+	// Cart module
+	cartHttpV1 "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/cart/delivery/http/v1"
+	cartRepository "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/cart/repository"
+	cartUsecase "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/cart/usecase"
+
+	// Order module
+	orderHttpV1 "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/order/delivery/http/v1"
+	orderKafka "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/order/delivery/kafka"
+	orderRepository "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/order/repository"
+	orderUsecase "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/order/usecase"
+
+	// Product module
 	productGrpc "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/product/delivery/grpc"
 	productsHttpV1 "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/product/delivery/http/v1"
 	"github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/product/delivery/kafka"
 	"github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/product/repository"
 	"github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/product/usecase"
+
+	// User module
+	userHttpV1 "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/user/delivery/http/v1"
+	userRepository "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/user/repository"
+	userUsecase "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/internal/user/usecase"
+
+	"github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/pkg/jwt"
 	"github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/pkg/logger"
 	productsService "github.com/aliiqbal208/GoKafka-Mongo-Observability-Stack/proto/product"
 )
@@ -94,14 +113,41 @@ func (s *server) Run() error {
 	productsProducer.Run()
 	defer productsProducer.Close()
 
-	// Setup Repos & UseCase.
+	// Orders Kafka Producer.
+	ordersProducer := orderKafka.NewOrdersProducer(s.log, s.cfg)
+	ordersProducer.Run()
+	defer ordersProducer.Close()
+
+	// Setup Product Repos & UseCase.
 	productMongoRepo := repository.NewProductMongoRepo(s.mongoDB)
 	productRedisRepo := repository.NewProductRedisRepository(s.redis)
 	productUC := usecase.NewProductUC(productMongoRepo, productRedisRepo, s.log, productsProducer)
 
+	// Setup Cart Repos & UseCase.
+	db := s.mongoDB.Database(s.cfg.MongoDB.DB)
+	cartMongoRepo := cartRepository.NewCartMongoRepository(s.log, db)
+	cartRedisRepo := cartRepository.NewCartRedisRepository(s.log, s.redis)
+	cartUC := cartUsecase.NewCartUseCase(s.log, cartMongoRepo, cartRedisRepo, productMongoRepo)
+
+	// Setup Order Repos & UseCase.
+	orderMongoRepo := orderRepository.NewOrderMongoRepository(s.log, db)
+	orderRedisRepo := orderRepository.NewOrderRedisRepository(s.log, s.redis)
+	orderUC := orderUsecase.NewOrderUseCase(s.log, orderMongoRepo, orderRedisRepo, cartUC, productMongoRepo)
+
+	// Setup JWT Manager.
+	jwtExpireHours := s.cfg.Server.JWTExpireHours
+	if jwtExpireHours == 0 {
+		jwtExpireHours = 24 // Default to 24 hours
+	}
+	jwtMgr := jwt.NewManager(s.cfg.Server.JWTSecret, jwtExpireHours)
+
+	// Setup User Repos & UseCase.
+	userMongoRepo := userRepository.NewUserMongoRepo(db)
+	userUC := userUsecase.NewUserUseCase(userMongoRepo, s.log)
+
 	// Interceptors & Middlewares.
 	im := interceptors.NewInterceptorManager(s.log, s.cfg)
-	mw := middlewares.NewMiddlewareManager(s.log, s.cfg)
+	mw := middlewares.NewMiddlewareManager(s.log, s.cfg, jwtMgr)
 
 	// gRPC Server setup.
 	grpcAddr := s.cfg.Server.Port
@@ -141,13 +187,36 @@ func (s *server) Run() error {
 	productHandlers := productsHttpV1.NewProductHandlers(s.log, productUC, validate, v1.Group("/products"), mw)
 	productHandlers.MapRoutes()
 
-	// Kafka Consumer Group.
+	// Cart HTTP handlers.
+	cartHandlers := cartHttpV1.NewCartHandlers(s.log, cartUC, validate, v1.Group("/cart"), mw)
+	cartHandlers.MapRoutes()
+
+	// Order HTTP handlers.
+	orderHandlers := orderHttpV1.NewOrderHandlers(s.log, orderUC, v1.Group("/orders"))
+	orderHandlers.MapRoutes()
+
+	// User/Auth HTTP handlers.
+	userHandlers := userHttpV1.NewUserHandlers(userUC, jwtMgr, s.log)
+	userHttpV1.MapAuthRoutes(v1, userHandlers, mw)
+
+	// Kafka Consumer Group for Products.
 	productsCG := kafka.NewProductsConsumerGroup(
 		s.cfg.Kafka.Brokers,
 		kafkaGroupID,
 		s.log,
 		s.cfg,
 		productUC,
+		validate,
+	)
+
+	// Kafka Consumer Group for Orders.
+	ordersCG := orderKafka.NewOrdersConsumerGroup(
+		s.cfg.Kafka.Brokers,
+		orderKafka.OrderConsumerGroup,
+		s.log,
+		s.cfg,
+		orderUC,
+		productMongoRepo,
 		validate,
 	)
 
@@ -162,6 +231,7 @@ func (s *server) Run() error {
 
 	// Start Kafka consumers in background.
 	go productsCG.RunConsumers(ctx, cancel)
+	go ordersCG.RunConsumers(ctx, cancel)
 
 	// Start a separate metrics server in background (optional).
 	go func() {

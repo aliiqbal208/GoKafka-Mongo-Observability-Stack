@@ -20,9 +20,29 @@ type Product struct {
 	ImageURL    *string            `json:"imageUrl,omitempty" bson:"imageUrl,omitempty" example:"https://example.com/image.jpg"`
 	Photos      []string           `json:"photos,omitempty" bson:"photos,omitempty"`
 	Quantity    int64              `json:"quantity,omitempty" bson:"quantity,omitempty" validate:"required" example:"100"`
+	Stock       int64              `json:"stock,omitempty" bson:"stock,omitempty" example:"50"`
 	Rating      int                `json:"rating,omitempty" bson:"rating,omitempty" validate:"required,min=0,max=10" example:"8"`
 	CreatedAt   time.Time          `json:"createdAt" bson:"createdAt,omitempty" swaggerignore:"true"`
 	UpdatedAt   time.Time          `json:"updatedAt" bson:"updatedAt,omitempty" swaggerignore:"true"`
+}
+
+// InStock checks if product has available stock
+func (p *Product) InStock(quantity int64) bool {
+	return p.Stock >= quantity
+}
+
+// DeductStock reduces the stock by the given quantity
+func (p *Product) DeductStock(quantity int64) bool {
+	if p.Stock < quantity {
+		return false
+	}
+	p.Stock -= quantity
+	return true
+}
+
+// AddStock increases the stock by the given quantity
+func (p *Product) AddStock(quantity int64) {
+	p.Stock += quantity
 }
 
 func (p *Product) GetImage() string {

@@ -36,6 +36,8 @@ type Server struct {
 	MaxConnectionIdle time.Duration
 	MaxConnectionAge  time.Duration
 	Kafka             Kafka
+	JWTSecret         string
+	JWTExpireHours    int
 }
 
 type Http struct {
