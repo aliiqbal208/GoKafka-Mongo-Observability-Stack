@@ -48,8 +48,10 @@ func (s *server) runHTTPServer() error {
 	// Common middleware:
 	s.app.Use(logger.New())
 	s.app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept, X-Request-ID, " + csrfTokenHeader,
+		AllowOrigins:     "http://localhost:3000, http://localhost:3001, http://localhost:5173",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, X-Request-ID, " + csrfTokenHeader,
+		AllowMethods:     "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+		AllowCredentials: true,
 	}))
 	s.app.Use(recover.New())
 	s.app.Use(requestid.New())
